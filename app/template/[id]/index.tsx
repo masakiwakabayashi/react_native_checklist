@@ -104,6 +104,12 @@ export default function TemplateDetailScreen() {
           style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}>
           <Text style={styles.editButtonText}>テンプレートを編集</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(`/template/${templateId}/run`)}
+          style={({ pressed }) => [styles.runButton, pressed && styles.runButtonPressed]}>
+          <Text style={styles.runButtonText}>チェックリストを開始</Text>
+        </Pressable>
       </View>
       <Text style={styles.title}>{template.name}</Text>
       {template.description ? <Text style={styles.description}>{template.description}</Text> : null}
@@ -145,11 +151,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginLeft: 12,
   },
+  runButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginLeft: 12,
+  },
   backButtonPressed: {
     opacity: 0.7,
   },
   editButtonPressed: {
     opacity: 0.7,
+  },
+  runButtonPressed: {
+    opacity: 0.8,
   },
   backButtonText: {
     color: '#fff',
@@ -161,8 +178,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  runButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
   actionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   title: {
     fontSize: 24,

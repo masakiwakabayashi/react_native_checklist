@@ -81,6 +81,12 @@ function AuthNavigator() {
           header: () => <Header />,
         }}
       />
+      <Stack.Screen
+        name="template/[id]/run"
+        options={{
+          header: () => <Header />,
+        }}
+      />
       <Stack.Screen name="login" options={{ headerShown: false }} />
     </Stack>
   );
