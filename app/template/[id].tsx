@@ -1,20 +1,28 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
+
+type TemplateItem = {
+  id: string;
+  title: string;
+  created_at?: string | null;
+};
 
 type TemplateDetail = {
   id: string;
   name: string;
   description: string | null;
   created_at?: string | null;
+  items?: TemplateItem[] | null;
 };
 
 export default function TemplateDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const templateId = typeof params.id === 'string' ? params.id : undefined;
+  const router = useRouter();
   const { user } = useAuth();
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +36,7 @@ export default function TemplateDetailScreen() {
 
     const { data, error } = await supabase
       .from('templates')
-      .select('id, name, description, created_at')
+      .select('id, name, description, created_at, items(id, title, created_at)')
       .eq('user_id', user.id)
       .eq('id', templateId)
       .single();
@@ -73,13 +81,38 @@ export default function TemplateDetailScreen() {
     );
   }
 
+  const sortedItems = useMemo(() => {
+    return (template.items ?? []).slice().sort((a, b) => {
+      if (!a.created_at || !b.created_at) return a.title.localeCompare(b.title);
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+  }, [template.items]);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.replace('/(tabs)')}
+        style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
+        <Text style={styles.backButtonText}>ホームに戻る</Text>
+      </Pressable>
       <Text style={styles.title}>{template.name}</Text>
       {template.description ? <Text style={styles.description}>{template.description}</Text> : null}
       {template.created_at ? (
         <Text style={styles.meta}>作成日: {new Date(template.created_at).toLocaleString()}</Text>
       ) : null}
+      <View style={styles.itemsSection}>
+        <Text style={styles.sectionTitle}>項目一覧</Text>
+        {sortedItems.length === 0 ? (
+          <Text style={styles.emptyItems}>項目が登録されていません。</Text>
+        ) : (
+          sortedItems.map((item) => (
+            <View key={item.id} style={styles.itemRow}>
+              <Text style={styles.itemTitle}>{item.title}</Text>
+            </View>
+          ))
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -89,6 +122,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
     gap: 12,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#111827',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  backButtonPressed: {
+    opacity: 0.7,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   title: {
     fontSize: 24,
@@ -103,6 +151,33 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  itemsSection: {
+    marginTop: 24,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  emptyItems: {
+    fontSize: 15,
+    color: '#6B7280',
+  },
+  itemRow: {
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
+    gap: 4,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  itemMeta: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
   centerContent: {
     flex: 1,

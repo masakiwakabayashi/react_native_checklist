@@ -41,17 +41,18 @@ on conflict (id) do update set
   name = excluded.name,
   description = excluded.description;
 
-insert into public.items (id, user_id, template_id, title)
+insert into public.items (id, user_id, template_id, title, sort_order)
 values
-  ('1a656f33-22f1-4f1e-9f08-a9a9385c0e00'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Sync Expo config with Supabase env vars'),
-  ('54eabf52-0dd2-4abd-ac86-375d35a331d9'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Run unit tests'),
-  ('20e1c417-9c27-4c7d-95df-0c0d66cf88d2'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Verify Expo dev build on device'),
-  ('b0d49bd5-191a-405c-b59c-3cd9089c9e21'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Draft release notes'),
-  ('a43fbd31-839b-4a50-804f-630abd2ffec1'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Tag Supabase migrations'),
-  ('f1ca0cf2-2f5b-4650-8b4b-2ea98a568c2f'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Smoke test production build')
+  ('1a656f33-22f1-4f1e-9f08-a9a9385c0e00'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Sync Expo config with Supabase env vars', 1),
+  ('54eabf52-0dd2-4abd-ac86-375d35a331d9'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Run unit tests', 2),
+  ('20e1c417-9c27-4c7d-95df-0c0d66cf88d2'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid, 'Verify Expo dev build on device', 3),
+  ('b0d49bd5-191a-405c-b59c-3cd9089c9e21'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Draft release notes', 1),
+  ('a43fbd31-839b-4a50-804f-630abd2ffec1'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Tag Supabase migrations', 2),
+  ('f1ca0cf2-2f5b-4650-8b4b-2ea98a568c2f'::uuid, '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid, 'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid, 'Smoke test production build', 3)
 on conflict (id) do update set
   title = excluded.title,
-  template_id = excluded.template_id;
+  template_id = excluded.template_id,
+  sort_order = excluded.sort_order;
 
 insert into public.tags (id, user_id, name)
 values
