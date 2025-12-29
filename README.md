@@ -10,7 +10,26 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Configure Supabase environment variables. Create an `.env` file (or use another mechanism
+   supported by Expo) that contains your project details:
+
+   ```bash
+   EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:55431
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+   SUPABASE_SECRET_KEY=your-secret-service-key
+   ```
+
+   Use the publishable key in the Expo app (see `lib/supabase.ts`) and reserve the secret key for
+   server/admin scripts (see `lib/supabase-admin.ts`). They must match the Supabase project that runs
+   locally via `supabase start`.
+
+3. Run the Supabase migrations and seed data so the demo user exists:
+
+   ```bash
+   supabase db reset
+   ```
+
+4. Start the app
 
    ```bash
    npx expo start
@@ -34,6 +53,13 @@ npm run reset-project
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Login
+
+- At launch the app shows a login screen. Sign in with any existing Supabase user. The included
+  seed (`supabase/seed.sql`) creates `demo@checklist.supabase.test` with the password `Passw0rd!`.
+- Account creation happens in Supabase Studio or via seeds; the app itself only supports login and
+  logout.
 
 ## Learn more
 
