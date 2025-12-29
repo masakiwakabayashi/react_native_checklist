@@ -64,6 +64,12 @@ function AuthNavigator() {
         }}
       />
       <Stack.Screen
+        name="template/create"
+        options={{
+          header: () => <Header />,
+        }}
+      />
+      <Stack.Screen
         name="template/[id]"
         options={{
           header: () => <Header />,

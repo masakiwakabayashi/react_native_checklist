@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 type TemplateItem = {
   id: string;
   title: string;
+  sort_order: number;
   created_at?: string | null;
 };
 
@@ -36,7 +37,7 @@ export default function TemplateDetailScreen() {
 
     const { data, error } = await supabase
       .from('templates')
-      .select('id, name, description, created_at, items(id, title, created_at)')
+      .select('id, name, description, created_at, items(id, title, sort_order, created_at)')
       .eq('user_id', user.id)
       .eq('id', templateId)
       .single();
@@ -98,9 +99,6 @@ export default function TemplateDetailScreen() {
       </Pressable>
       <Text style={styles.title}>{template.name}</Text>
       {template.description ? <Text style={styles.description}>{template.description}</Text> : null}
-      {template.created_at ? (
-        <Text style={styles.meta}>作成日: {new Date(template.created_at).toLocaleString()}</Text>
-      ) : null}
       <View style={styles.itemsSection}>
         <Text style={styles.sectionTitle}>項目一覧</Text>
         {sortedItems.length === 0 ? (
@@ -108,7 +106,7 @@ export default function TemplateDetailScreen() {
         ) : (
           sortedItems.map((item) => (
             <View key={item.id} style={styles.itemRow}>
-              <Text style={styles.itemTitle}>{item.title}</Text>
+              <Text style={styles.itemTitle}>{item.sort_order}. {item.title}</Text>
             </View>
           ))
         )}

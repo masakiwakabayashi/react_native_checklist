@@ -51,10 +51,10 @@ export function TemplateList() {
     setRefreshing(false);
   }, [fetchTemplates]);
 
-  const listContentStyle =
-    templates.length === 0
-      ? [styles.listEmptyContent, { paddingBottom: Math.max(insets.bottom, 16) }]
-      : { paddingBottom: Math.max(insets.bottom, 16) };
+  const listContentStyle = {
+    paddingBottom: Math.max(insets.bottom, 16),
+    paddingTop: 12,
+  };
 
   const handleSelectTemplate = useCallback(
     (templateId: string) => {
@@ -90,8 +90,17 @@ export function TemplateList() {
       renderItem={renderTemplate}
       refreshing={refreshing}
       onRefresh={handleRefresh}
+      ListHeaderComponent={
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/template/create')}
+          style={({ pressed }) => [styles.createButton, pressed && styles.templateItemPressed]}>
+          <Text style={styles.createButtonText}>テンプレートを作成</Text>
+        </Pressable>
+      }
+      ListHeaderComponentStyle={styles.listHeader}
       ListEmptyComponent={
-        <View style={styles.emptyState}>
+        <View style={styles.emptyStateWrapper}>
           <Text style={styles.subtitle}>テンプレートがありません</Text>
           <Text style={styles.body}>Supabase Studioなどからテンプレートを追加してください。</Text>
           <Button title="再読み込み" onPress={handleRefresh} />
@@ -125,13 +134,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#4B5563',
   },
-  listEmptyContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    gap: 8,
-    alignItems: 'flex-start',
+  listHeader: {
+    marginBottom: 12,
   },
-  emptyState: {
+  createButton: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1D4ED8',
+    textAlign: 'center',
+  },
+  emptyStateWrapper: {
+    flexGrow: 1,
+    minHeight: 240,
+    justifyContent: 'center',
     gap: 8,
     alignItems: 'flex-start',
   },
