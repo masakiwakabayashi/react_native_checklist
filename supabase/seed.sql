@@ -7,35 +7,20 @@ begin;
 create extension if not exists "pgcrypto" with schema extensions;
 
 -- Deterministic IDs so the seed can be applied repeatedly.
-insert into auth.users (
-    id,
-    instance_id,
-    aud,
-    role,
-    email,
-    encrypted_password,
-    email_confirmed_at,
-    raw_app_meta_data,
-    raw_user_meta_data,
-    created_at,
-    updated_at
+-- ユーザーデータの作成
+WITH credentials(id, mail, pass) AS (
+  SELECT * FROM (VALUES 
+    ('79d7c983-3a5d-48b6-8bc1-60d9f2243ac4', 'user1@example.com', 'aW4uHStOg')
+  ) AS users(id, mail, pass)
+),
+create_user AS (
+  INSERT INTO auth.users (id, instance_id, ROLE, aud, email, raw_app_meta_data, raw_user_meta_data, is_super_admin, encrypted_password, created_at, updated_at, last_sign_in_at, email_confirmed_at, confirmation_sent_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+    SELECT id::uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', mail, '{"provider":"email","providers":["email"]}', '{}', FALSE, crypt(pass, gen_salt('bf')), NOW(), NOW(), NOW(), NOW(), NOW(), '', '', '', '' FROM credentials
+  RETURNING id
 )
-values (
-    '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid,
-    '00000000-0000-0000-0000-000000000000'::uuid,
-    'authenticated',
-    'authenticated',
-    'demo@checklist.supabase.test',
-    crypt('Passw0rd!', gen_salt('bf', 10)),
-    now(),
-    jsonb_build_object('provider', 'email', 'providers', array['email']),
-    '{}'::jsonb,
-    now(),
-    now()
-)
-on conflict (id) do update set
-    email = excluded.email,
-    updated_at = now();
+INSERT INTO auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  SELECT gen_random_uuid(), id, id, json_build_object('sub', id), 'email', NOW(), NOW(), NOW() FROM create_user;
+
 
 -- Templates capture reusable checklist structures per user.
 insert into public.templates (id, user_id, name, description)

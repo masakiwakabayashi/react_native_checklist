@@ -47,9 +47,9 @@ export default function LoginScreen() {
         keyboardVerticalOffset={32}>
         <View style={styles.container}>
           <View>
-            <Text style={styles.title}>チェックリストにログイン</Text>
+            <Text style={styles.title}>ログイン</Text>
             <Text style={styles.subtitle}>
-              Supabaseに作成済みのユーザーでログインしてください（demo@checklist.supabase.test など）。
+              作成済みのユーザーでログインしてください。
             </Text>
           </View>
 
@@ -85,7 +85,6 @@ export default function LoginScreen() {
               disabled={!isFormValid || loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ログイン</Text>}
             </Pressable>
-            <Text style={styles.hint}>※ 新規登録は不要です。Supabase Studioまたはシードデータのユーザーを利用してください。</Text>
           </View>
         </View>
       </KeyboardAvoidingView>
