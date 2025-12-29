@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 
 type Template = {
@@ -11,6 +12,7 @@ type Template = {
 };
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -18,17 +20,6 @@ export default function HomeScreen() {
 
   const fetchTemplates = useCallback(async () => {
     setErrorMessage(null);
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error) {
-      setTemplates([]);
-      setErrorMessage(error.message);
-      return;
-    }
-
     if (!user) {
       setTemplates([]);
       return;
@@ -47,7 +38,7 @@ export default function HomeScreen() {
     }
 
     setTemplates(data ?? []);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchTemplates().finally(() => setLoading(false));
@@ -95,7 +86,7 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>テンプレート</Text>
-            <Text style={styles.body}>ユーザーのテンプレート一覧です。</Text>
+            <Text style={styles.body}>ログインユーザーのテンプレート一覧です。</Text>
             {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
           </View>
         }
@@ -106,14 +97,6 @@ export default function HomeScreen() {
             <Button title="再読み込み" onPress={handleRefresh} />
           </View>
         }
-        // contentContainerStyle={templates.length === 0 ? styles.listEmptyContent : styles.listContent}
-        // ListFooterComponent={
-        //   <View style={styles.accountCard}>
-        //     <Text style={styles.subtitle}>Account</Text>
-        //     <Text style={styles.body}>Supabaseの認証情報でログイン中です。</Text>
-        //     <Button title="サインアウト" onPress={handleSignOut} />
-        //   </View>
-        // }
       />
     </SafeAreaView>
   );

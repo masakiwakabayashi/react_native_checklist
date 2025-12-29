@@ -1,12 +1,11 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
-import { supabase } from '@/lib/supabase';
-import type { Session } from '@supabase/supabase-js';
+import { AuthProvider, useAuth } from '@/contexts/auth-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -14,37 +13,19 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={DefaultTheme}>
-      <AuthNavigator />
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={DefaultTheme}>
+        <AuthNavigator />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
 function AuthNavigator() {
   const router = useRouter();
   const pathname = usePathname();
-  const [session, setSession] = useState<Session | null>(null);
-  const [initializing, setInitializing] = useState(true);
-
-  useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-      })
-      .finally(() => setInitializing(false));
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { session, initializing } = useAuth();
 
   const isAuthRoute = useMemo(() => pathname?.startsWith('/login'), [pathname]);
 
