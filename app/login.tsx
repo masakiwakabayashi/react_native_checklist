@@ -6,18 +6,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('aW4uHStOg');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('user1@example.com');
+  const [password, setPassword] = useState('aW4uHStOg');
   const [loading, setLoading] = useState(false);
 
   const isFormValid = email.trim().length > 0 && password.trim().length > 0;
