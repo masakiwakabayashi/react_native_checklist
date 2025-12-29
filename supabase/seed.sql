@@ -28,13 +28,13 @@ values
   (
     '8c7e1d66-5a16-4c70-9e93-05463fd71df4'::uuid,
     '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid,
-    'Daily Mobile QA',
+    'チェックリストサンプル1',
     'Quick run-through before starting development on a new story.'
   ),
   (
     'b3d42866-6e31-4d92-88de-cf7100ad5948'::uuid,
     '79d7c983-3a5d-48b6-8bc1-60d9f2243ac4'::uuid,
-    'Release Prep',
+    'チェックリストサンプル2',
     'Everything needed before promoting a build to production.'
   )
 on conflict (id) do update set
