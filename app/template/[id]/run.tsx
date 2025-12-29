@@ -320,8 +320,8 @@ export default function TemplateRunScreen() {
           accessibilityRole="button"
           onPress={handleApplyChanges}
           disabled={totalItems === 0}
-          style={({ pressed }) => [styles.applyButton, pressed && styles.applyButtonPressed]}>
-          <Text style={styles.applyButtonText}>更新</Text>
+        >
+          <Text>更新</Text>
         </Pressable>
       </View>
     </ScrollView>
