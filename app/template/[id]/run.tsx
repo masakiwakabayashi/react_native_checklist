@@ -18,6 +18,7 @@ type TemplateMeta = {
 };
 
 type ExecutionState = Record<string, { executionId?: string; checked: boolean }>;
+type LocalState = Record<string, { checked: boolean }>;
 
 export default function TemplateRunScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -28,6 +29,7 @@ export default function TemplateRunScreen() {
   const [template, setTemplate] = useState<TemplateMeta | null>(null);
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [executionState, setExecutionState] = useState<ExecutionState>({});
+  const [localState, setLocalState] = useState<LocalState>({});
   const [loading, setLoading] = useState(true);
   const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
   const [resetting, setResetting] = useState(false);
@@ -38,6 +40,7 @@ export default function TemplateRunScreen() {
       setTemplate(null);
       setItems([]);
       setExecutionState({});
+      setLocalState({});
       return;
     }
 
@@ -98,8 +101,15 @@ export default function TemplateRunScreen() {
       });
 
       setExecutionState(map);
+      setLocalState(
+        orderedItems.reduce((acc, item) => {
+          acc[item.id] = { checked: map[item.id]?.checked ?? false };
+          return acc;
+        }, {} as LocalState),
+      );
     } else {
       setExecutionState({});
+      setLocalState({});
     }
   }, [templateId, user]);
 
@@ -108,49 +118,64 @@ export default function TemplateRunScreen() {
     fetchChecklist().finally(() => setLoading(false));
   }, [fetchChecklist]);
 
-  const handleToggle = useCallback(
-    async (itemId: string) => {
-      if (!user || !templateId) return;
+  const handleToggle = useCallback((itemId: string) => {
+    setLocalState((prev) => ({
+      ...prev,
+      [itemId]: { checked: !prev[itemId]?.checked },
+    }));
+  }, []);
 
-      setUpdatingIds((prev) => ({ ...prev, [itemId]: true }));
-      const current = executionState[itemId];
-      const nextChecked = !current?.checked;
+  const handleApplyChanges = useCallback(async () => {
+    if (!user || !templateId) return;
+    const updates = items.map((item) => ({
+      itemId: item.id,
+      executionId: executionState[item.id]?.executionId,
+      remoteChecked: executionState[item.id]?.checked ?? false,
+      localChecked: localState[item.id]?.checked ?? false,
+    }));
+    setUpdatingIds((prev) => items.reduce((acc, item) => ({ ...acc, [item.id]: true }), prev));
 
-      try {
-        if (current?.executionId) {
+    try {
+      for (const update of updates) {
+        if (update.executionId) {
+          if (update.remoteChecked === update.localChecked) {
+            continue;
+          }
           const { error } = await supabase
             .from('executions')
-            .update({ checked: nextChecked })
-            .eq('id', current.executionId)
+            .update({ checked: update.localChecked })
+            .eq('id', update.executionId)
             .eq('user_id', user.id);
-
           if (error) throw error;
           setExecutionState((prev) => ({
             ...prev,
-            [itemId]: { executionId: current.executionId, checked: nextChecked },
+            [update.itemId]: { executionId: update.executionId, checked: update.localChecked },
           }));
-        } else {
+        } else if (update.localChecked) {
           const { data, error } = await supabase
             .from('executions')
-            .insert({ user_id: user.id, item_id: itemId, checked: nextChecked })
+            .insert({ user_id: user.id, item_id: update.itemId, checked: true })
             .select('id, checked')
             .single();
-
           if (error || !data) throw error ?? new Error('チェック状態の保存に失敗しました');
           setExecutionState((prev) => ({
             ...prev,
-            [itemId]: { executionId: data.id, checked: data.checked },
+            [update.itemId]: { executionId: data.id, checked: true },
+          }));
+        } else {
+          setExecutionState((prev) => ({
+            ...prev,
+            [update.itemId]: { executionId: undefined, checked: false },
           }));
         }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'チェック状態の更新に失敗しました。';
-        Alert.alert('エラー', message);
-      } finally {
-        setUpdatingIds((prev) => ({ ...prev, [itemId]: false }));
       }
-    },
-    [executionState, templateId, user],
-  );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '更新に失敗しました。';
+      Alert.alert('エラー', message);
+    } finally {
+      setUpdatingIds({});
+    }
+  }, [executionState, items, localState, templateId, user]);
 
   const handleReset = useCallback(async () => {
     if (!user || items.length === 0) return;
@@ -163,11 +188,16 @@ export default function TemplateRunScreen() {
         .eq('user_id', user.id)
         .in('item_id', itemIds);
       if (error) throw error;
-      setExecutionState(
+      const resetState = items.reduce((acc, item) => {
+        acc[item.id] = { checked: false };
+        return acc;
+      }, {} as ExecutionState);
+      setExecutionState(resetState);
+      setLocalState(
         items.reduce((acc, item) => {
           acc[item.id] = { checked: false };
           return acc;
-        }, {} as ExecutionState),
+        }, {} as LocalState),
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'リセットに失敗しました。';
@@ -209,7 +239,7 @@ export default function TemplateRunScreen() {
   }
 
   const totalItems = items.length;
-  const completedCount = totalItems === 0 ? 0 : items.reduce((count, item) => (executionState[item.id]?.checked ? count + 1 : count), 0);
+  const completedCount = totalItems === 0 ? 0 : items.reduce((count, item) => (localState[item.id]?.checked ? count + 1 : count), 0);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -243,25 +273,26 @@ export default function TemplateRunScreen() {
             ]}
           />
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={handleReset}
-          disabled={resetting || totalItems === 0}
-          style={({ pressed }) => [
-            styles.resetButton,
-            (resetting || totalItems === 0) && styles.resetButtonDisabled,
-            pressed && styles.resetButtonPressed,
-          ]}>
-          <Text style={styles.resetButtonText}>{resetting ? 'リセット中...' : '進捗をリセット'}</Text>
-        </Pressable>
+        <View style={styles.progressActions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleReset}
+            disabled={resetting || totalItems === 0}
+            style={({ pressed }) => [
+              styles.resetButton,
+              (resetting || totalItems === 0) && styles.resetButtonDisabled,
+              pressed && styles.resetButtonPressed,
+            ]}>
+            <Text style={styles.resetButtonText}>{resetting ? 'リセット中...' : '進捗をリセット'}</Text>
+          </Pressable>
+        </View>
       </View>
       <View style={styles.itemsSection}>
         {items.length === 0 ? (
           <Text style={styles.emptyItems}>このテンプレートにはアイテムがありません。</Text>
         ) : (
           items.map((item, index) => {
-            const state = executionState[item.id];
-            const isChecked = state?.checked ?? false;
+            const isChecked = localState[item.id]?.checked ?? false;
             const isUpdating = updatingIds[item.id];
             return (
               <Pressable
@@ -283,6 +314,15 @@ export default function TemplateRunScreen() {
             );
           })
         )}
+      </View>
+      <View style={styles.centerContent}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={handleApplyChanges}
+          disabled={totalItems === 0}
+          style={({ pressed }) => [styles.applyButton, pressed && styles.applyButtonPressed]}>
+          <Text style={styles.applyButtonText}>更新</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -311,6 +351,12 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     gap: 12,
+  },
+  progressActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
   },
   progressText: {
     fontSize: 16,
