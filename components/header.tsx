@@ -1,16 +1,9 @@
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface HeaderProps {
-  title?: string;
-  description?: string;
-}
-
-export function Header({
-  title = 'ダッシュボード',
-  description = 'ログインしているユーザー向けのページです。',
-}: HeaderProps) {
+export function Header() {
   const { user } = useAuth();
 
   const handleSignOut = async () => {
@@ -21,16 +14,11 @@ export function Header({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        {user?.email ? <Text style={styles.meta}>ログイン中: {user.email}</Text> : null}
+    <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
+      <View style={{ height: 56, justifyContent: 'center' }}>
+        <Text>共通ヘッダー</Text>
       </View>
-      <Pressable style={styles.button} onPress={handleSignOut} accessibilityRole="button">
-        <Text style={styles.buttonText}>サインアウト</Text>
-      </Pressable>
-    </View>
+    </SafeAreaView>
   );
 }
 

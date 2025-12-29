@@ -1,3 +1,4 @@
+import { Header } from '@/components/header';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -52,9 +53,14 @@ function AuthNavigator() {
 
   return (
     <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="(tabs)" 
+        options={{ 
+          // ログインページ以外は共通のヘッダー
+          header: () => <Header />,
+        }}
+      />
       <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
 }

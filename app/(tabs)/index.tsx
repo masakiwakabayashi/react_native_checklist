@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Header } from '@/components/header';
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 
@@ -60,32 +58,20 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerContent}>
           <Text style={styles.title}>テンプレート</Text>
           <Text style={styles.body}>データを読み込み中です…</Text>
         </View>
-      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
       <FlatList
         data={templates}
         keyExtractor={(item) => item.id}
         renderItem={renderTemplate}
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Header
-              title="テンプレート"
-              description="ログイン中ユーザーに紐づくテンプレート一覧です。"
-            />
-            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
-          </View>
-        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.subtitle}>テンプレートがありません</Text>
@@ -96,7 +82,6 @@ export default function HomeScreen() {
         contentContainerStyle={templates.length === 0 ? styles.listEmptyContent : styles.listContent}
         ListFooterComponent={<View style={styles.footerSpacer} />}
       />
-    </SafeAreaView>
   );
 }
 
