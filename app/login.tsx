@@ -46,12 +46,8 @@ export default function LoginScreen() {
         style={styles.flex}
         keyboardVerticalOffset={32}>
         <View style={styles.container}>
-          <View>
-            <Text style={styles.title}>ログイン</Text>
-            <Text style={styles.subtitle}>
-              作成済みのユーザーでログインしてください。
-            </Text>
-          </View>
+          <Text style={styles.title}>ログイン</Text>
+          <Text style={styles.subtitle}>作成済みのユーザーでログインしてください。</Text>
 
           <View style={styles.form}>
             <Text style={styles.label}>メールアドレス</Text>
@@ -77,15 +73,13 @@ export default function LoginScreen() {
             />
           </View>
 
-          <View>
-            <Pressable
-              accessibilityRole="button"
-              onPress={handleSignIn}
-              style={[styles.button, (!isFormValid || loading) && styles.buttonDisabled]}
-              disabled={!isFormValid || loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ログイン</Text>}
-            </Pressable>
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleSignIn}
+            style={[styles.button, (!isFormValid || loading) && styles.buttonDisabled]}
+            disabled={!isFormValid || loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>ログイン</Text>}
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

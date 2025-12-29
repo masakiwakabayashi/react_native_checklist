@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
+import { Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Header } from '@/components/header';
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 
@@ -50,13 +51,6 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [fetchTemplates]);
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      Alert.alert('サインアウトに失敗しました', error.message);
-    }
-  };
-
   const renderTemplate: ListRenderItem<Template> = ({ item }) => (
     <View style={styles.templateItem}>
       <Text style={styles.templateName}>{item.name}</Text>
@@ -85,8 +79,10 @@ export default function HomeScreen() {
         onRefresh={handleRefresh}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>テンプレート</Text>
-            <Text style={styles.body}>ログインユーザーのテンプレート一覧です。</Text>
+            <Header
+              title="テンプレート"
+              description="ログイン中ユーザーに紐づくテンプレート一覧です。"
+            />
             {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
           </View>
         }
@@ -97,6 +93,8 @@ export default function HomeScreen() {
             <Button title="再読み込み" onPress={handleRefresh} />
           </View>
         }
+        contentContainerStyle={templates.length === 0 ? styles.listEmptyContent : styles.listContent}
+        ListFooterComponent={<View style={styles.footerSpacer} />}
       />
     </SafeAreaView>
   );
@@ -157,9 +155,8 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'flex-start',
   },
-  accountCard: {
-    marginTop: 32,
-    gap: 12,
+  footerSpacer: {
+    height: 24,
   },
   centerContent: {
     flex: 1,
