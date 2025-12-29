@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -208,12 +208,8 @@ export default function TemplateRunScreen() {
     );
   }
 
-  const completedCount = useMemo(() => {
-    if (items.length === 0) return 0;
-    return items.reduce((count, item) => (executionState[item.id]?.checked ? count + 1 : count), 0);
-  }, [executionState, items]);
-
   const totalItems = items.length;
+  const completedCount = totalItems === 0 ? 0 : items.reduce((count, item) => (executionState[item.id]?.checked ? count + 1 : count), 0);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
