@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
+import { Button, FlatList, ListRenderItem, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -14,6 +15,7 @@ export type Template = {
 export function TemplateList() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,11 +56,21 @@ export function TemplateList() {
       ? [styles.listEmptyContent, { paddingBottom: Math.max(insets.bottom, 16) }]
       : { paddingBottom: Math.max(insets.bottom, 16) };
 
+  const handleSelectTemplate = useCallback(
+    (templateId: string) => {
+      router.push(`/template/${templateId}`);
+    },
+    [router],
+  );
+
   const renderTemplate: ListRenderItem<Template> = ({ item }) => (
-    <View style={styles.templateItem}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => handleSelectTemplate(item.id)}
+      style={({ pressed }) => [styles.templateItem, pressed && styles.templateItemPressed]}>
       <Text style={styles.templateName}>{item.name}</Text>
       {item.description ? <Text style={styles.templateDescription}>{item.description}</Text> : null}
-    </View>
+    </Pressable>
   );
 
   if (loading) {
@@ -100,6 +112,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E5E7EB',
     gap: 4,
+  },
+  templateItemPressed: {
+    backgroundColor: '#F3F4F6',
   },
   templateName: {
     fontSize: 17,
