@@ -16,7 +16,7 @@ import {
 import { supabase } from '@/lib/supabase';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('demo@checklist.supabase.test');
+  const [email, setEmail] = useState('aW4uHStOg');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
