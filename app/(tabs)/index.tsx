@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +13,7 @@ type Template = {
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,8 +67,16 @@ export default function HomeScreen() {
     );
   }
 
+  const bottomPadding = Math.max(insets.bottom, 16);
+  const listContentStyle =
+    templates.length === 0
+      ? [styles.listEmptyContent, { paddingBottom: bottomPadding }]
+      : { paddingBottom: bottomPadding };
+
   return (
+    <View style={styles.screen}>
       <FlatList
+        style={styles.list}
         data={templates}
         keyExtractor={(item) => item.id}
         renderItem={renderTemplate}
@@ -79,17 +89,22 @@ export default function HomeScreen() {
             <Button title="再読み込み" onPress={handleRefresh} />
           </View>
         }
-        contentContainerStyle={templates.length === 0 ? styles.listEmptyContent : styles.listContent}
-        ListFooterComponent={<View style={styles.footerSpacer} />}
+        contentContainerStyle={listContentStyle}
+        showsVerticalScrollIndicator={false}
       />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
-    padding: 24,
     backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  list: {
+    flex: 1,
   },
   subtitle: {
     fontSize: 18,
@@ -128,20 +143,13 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 14,
   },
-  listContent: {
-    paddingBottom: 32,
-  },
   listEmptyContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingBottom: 32,
   },
   emptyState: {
     gap: 8,
     alignItems: 'flex-start',
-  },
-  footerSpacer: {
-    height: 24,
   },
   centerContent: {
     flex: 1,
