@@ -106,6 +106,12 @@ export default function TemplateCreateScreen() {
         style={styles.flex}
         keyboardVerticalOffset={32}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.replace('/(tabs)')}
+            style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
+            <Text style={styles.backButtonText}>ホームに戻る</Text>
+          </Pressable>
           <View style={styles.header}>
             <Text style={styles.title}>テンプレートを作成</Text>
             <Text style={styles.subtitle}>名前と説明、必要なチェックアイテムを入力してください。</Text>
@@ -180,6 +186,21 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     gap: 24,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#111827',
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  backButtonPressed: {
+    opacity: 0.7,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   header: {
     gap: 8,

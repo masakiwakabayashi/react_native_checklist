@@ -91,12 +91,20 @@ export default function TemplateDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.replace('/(tabs)')}
-        style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
-        <Text style={styles.backButtonText}>ホームに戻る</Text>
-      </Pressable>
+      <View style={styles.actionRow}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.replace('/(tabs)')}
+          style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
+          <Text style={styles.backButtonText}>ホームに戻る</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(`/template/${templateId}/edit`)}
+          style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}>
+          <Text style={styles.editButtonText}>テンプレートを編集</Text>
+        </Pressable>
+      </View>
       <Text style={styles.title}>{template.name}</Text>
       {template.description ? <Text style={styles.description}>{template.description}</Text> : null}
       <View style={styles.itemsSection}>
@@ -128,13 +136,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
+  editButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginLeft: 12,
+  },
   backButtonPressed: {
+    opacity: 0.7,
+  },
+  editButtonPressed: {
     opacity: 0.7,
   },
   backButtonText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  editButtonText: {
+    color: '#111827',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  actionRow: {
+    flexDirection: 'row',
   },
   title: {
     fontSize: 24,
