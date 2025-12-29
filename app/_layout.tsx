@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 
@@ -16,7 +17,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={DefaultTheme}>
-        <AuthNavigator />
+        <SafeAreaView style={styles.safeArea}>
+          <AuthNavigator />
+        </SafeAreaView>
         <StatusBar style="auto" />
       </ThemeProvider>
     </AuthProvider>
@@ -66,6 +69,10 @@ function AuthNavigator() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   centerContent: {
     flex: 1,
     alignItems: 'center',

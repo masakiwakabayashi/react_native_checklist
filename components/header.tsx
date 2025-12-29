@@ -1,7 +1,6 @@
 import { useAuth } from '@/contexts/auth-context';
 import { supabase } from '@/lib/supabase';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export function Header() {
   const { user } = useAuth();
@@ -14,15 +13,22 @@ export function Header() {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
-      <View style={{ height: 56, justifyContent: 'center' }}>
+    <View style={styles.headerContainer}>
+      <View style={styles.headerContent}>
         <Text>共通ヘッダー</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    backgroundColor: '#fff',
+  },
+  headerContent: {
+    height: 56,
+    justifyContent: 'center',
+  },
   container: {
     gap: 12,
     marginBottom: 16,

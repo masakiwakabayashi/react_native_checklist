@@ -11,7 +11,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '@/lib/supabase';
 
@@ -40,7 +39,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.screen}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -82,7 +81,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: '#fff',
   },
