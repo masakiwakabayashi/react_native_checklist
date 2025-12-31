@@ -1,11 +1,12 @@
 import { StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { TemplateDetailView } from '@/components/template-detail';
 import { useAuth } from '@/contexts/auth-context';
-import { fetchTemplateDetail } from '@/repositories/templates';
 import type { TemplateDetail } from '@/repositories/templates';
+import { fetchTemplateDetail } from '@/repositories/templates';
 
 export default function TemplateDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -16,16 +17,6 @@ export default function TemplateDetailScreen() {
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const sortedItems = useMemo(() => {
-    if (!template?.items) {
-      return [];
-    }
-
-    return template.items.slice().sort((a, b) => {
-      if (!a.created_at || !b.created_at) return a.title.localeCompare(b.title);
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-  }, [template?.items]);
 
   const fetchTemplate = useCallback(async () => {
     if (!user || !templateId) {
@@ -115,20 +106,7 @@ export default function TemplateDetailScreen() {
           <Text style={styles.runButtonText}>チェックリストを開始</Text>
         </Pressable>
       </View>
-      <Text style={styles.title}>{template.name}</Text>
-      {template.description ? <Text style={styles.description}>{template.description}</Text> : null}
-      <View style={styles.itemsSection}>
-        <Text style={styles.sectionTitle}>項目一覧</Text>
-        {sortedItems.length === 0 ? (
-          <Text style={styles.emptyItems}>項目が登録されていません。</Text>
-        ) : (
-          sortedItems.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
-              <Text style={styles.itemTitle}>{item.sort_order}. {item.title}</Text>
-            </View>
-          ))
-        )}
-      </View>
+      <TemplateDetailView template={template} />
     </ScrollView>
   );
 }
@@ -190,47 +168,6 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  description: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 22,
-  },
-  meta: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  itemsSection: {
-    marginTop: 24,
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  emptyItems: {
-    fontSize: 15,
-    color: '#6B7280',
-  },
-  itemRow: {
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
-    gap: 4,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  itemMeta: {
-    fontSize: 13,
-    color: '#9CA3AF',
   },
   centerContent: {
     flex: 1,
