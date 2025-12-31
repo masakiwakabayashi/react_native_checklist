@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
+import { fetchTemplatesByUser } from '@/repositories/templates';
 
 export type Template = {
   id: string;
@@ -26,18 +26,12 @@ export function TemplateList() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('templates')
-      .select('id, name, description')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
-
-    if (error) {
+    try {
+      const data = await fetchTemplatesByUser(user.id);
+      setTemplates(data);
+    } catch {
       setTemplates([]);
-      return;
     }
-
-    setTemplates(data ?? []);
   }, [user]);
 
   useEffect(() => {

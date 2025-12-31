@@ -16,7 +16,9 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
+import { deleteTemplateItems, insertTemplateItems, upsertTemplateItems } from '@/repositories/items';
+import { fetchTemplateDetail, updateTemplate } from '@/repositories/templates';
+import type { TemplateDetail } from '@/repositories/templates';
 
 type TemplateItemField = {
   fieldId: string;
@@ -64,15 +66,11 @@ export default function TemplateEditScreen() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('templates')
-      .select('id, name, description, items(id, title, sort_order)')
-      .eq('user_id', user.id)
-      .eq('id', templateId)
-      .single();
-
-    if (error || !data) {
-      setErrorMessage(error?.message ?? 'テンプレートを取得できませんでした');
+    let data: TemplateDetail;
+    try {
+      data = await fetchTemplateDetail(user.id, templateId);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'テンプレートを取得できませんでした');
       setItems([{ fieldId: nanoid(), title: '' }]);
       return;
     }
@@ -80,7 +78,7 @@ export default function TemplateEditScreen() {
     setName(data.name ?? '');
     setDescription(data.description ?? '');
 
-    const templateItems = (data.items ?? []) as { id: string; title: string; sort_order?: number | null }[];
+    const templateItems = (data.items ?? []) as NonNullable<TemplateDetail['items']>;
     const sortedItems = templateItems
       .slice()
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -139,18 +137,12 @@ export default function TemplateEditScreen() {
     setSubmitting(true);
 
     try {
-      const { error: updateError } = await supabase
-        .from('templates')
-        .update({
-          name: name.trim(),
-          description: description.trim() || null,
-        })
-        .eq('id', templateId)
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        throw updateError;
-      }
+      await updateTemplate({
+        userId: user.id,
+        templateId,
+        name: name.trim(),
+        description: description.trim() || null,
+      });
 
       const existingPayload = normalizedItems
         .filter((item) => item.itemId)
@@ -174,30 +166,9 @@ export default function TemplateEditScreen() {
       const retainedIds = existingPayload.map((item) => item.id);
       const removedIds = initialItemIds.filter((id) => !retainedIds.includes(id));
 
-      if (existingPayload.length > 0) {
-        const { error: upsertError } = await supabase.from('items').upsert(existingPayload);
-        if (upsertError) {
-          throw upsertError;
-        }
-      }
-
-      if (newPayload.length > 0) {
-        const { error: insertError } = await supabase.from('items').insert(newPayload);
-        if (insertError) {
-          throw insertError;
-        }
-      }
-
-      if (removedIds.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('items')
-          .delete()
-          .eq('template_id', templateId)
-          .in('id', removedIds);
-        if (deleteError) {
-          throw deleteError;
-        }
-      }
+      await upsertTemplateItems(existingPayload);
+      await insertTemplateItems(newPayload);
+      await deleteTemplateItems(templateId, removedIds);
 
       handleNavigateToDetail();
     } catch (error) {

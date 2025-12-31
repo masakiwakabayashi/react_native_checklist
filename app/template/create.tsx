@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
+import { insertTemplateItems } from '@/repositories/items';
+import { createTemplate } from '@/repositories/templates';
 
 type TemplateItemField = {
   id: string;
@@ -72,19 +73,11 @@ export default function TemplateCreateScreen() {
     setSubmitting(true);
 
     try {
-      const { data: template, error: templateError } = await supabase
-        .from('templates')
-        .insert({
-          user_id: user.id,
-          name: name.trim(),
-          description: description.trim() || null,
-        })
-        .select('id')
-        .single();
-
-      if (templateError || !template) {
-        throw templateError ?? new Error('テンプレートの作成に失敗しました');
-      }
+      const template = await createTemplate({
+        userId: user.id,
+        name: name.trim(),
+        description: description.trim() || null,
+      });
 
       if (normalizedItems.length > 0) {
         const itemsPayload = normalizedItems.map((title, index) => ({
@@ -94,10 +87,7 @@ export default function TemplateCreateScreen() {
           sort_order: index + 1,
         }));
 
-        const { error: itemsError } = await supabase.from('items').insert(itemsPayload);
-        if (itemsError) {
-          throw itemsError;
-        }
+        await insertTemplateItems(itemsPayload);
       }
 
       router.replace(`/template/${template.id}`);

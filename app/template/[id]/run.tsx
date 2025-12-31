@@ -4,13 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
-
-type TemplateItem = {
-  id: string;
-  title: string;
-  sort_order?: number | null;
-};
+import { deleteExecutionsByItemIds, fetchExecutionsByItemIds, insertExecution, updateExecutionChecked } from '@/repositories/executions';
+import { fetchTemplateDetail } from '@/repositories/templates';
+import type { TemplateDetailItem } from '@/repositories/templates';
 
 type TemplateMeta = {
   id: string;
@@ -29,7 +25,7 @@ export default function TemplateRunScreen() {
   const navigation = useNavigation();
 
   const [template, setTemplate] = useState<TemplateMeta | null>(null);
-  const [items, setItems] = useState<TemplateItem[]>([]);
+  const [items, setItems] = useState<TemplateDetailItem[]>([]);
   const [executionState, setExecutionState] = useState<ExecutionState>({});
   const [localState, setLocalState] = useState<LocalState>({});
   const [loading, setLoading] = useState(true);
@@ -47,22 +43,18 @@ export default function TemplateRunScreen() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('templates')
-      .select('id, name, description, items(id, title, sort_order)')
-      .eq('user_id', user.id)
-      .eq('id', templateId)
-      .single();
-
-    if (error || !data) {
+    let data;
+    try {
+      data = await fetchTemplateDetail(user.id, templateId);
+    } catch (error) {
       setTemplate(null);
       setItems([]);
       setExecutionState({});
-      setErrorMessage(error?.message ?? 'テンプレートが見つかりませんでした');
+      setErrorMessage(error instanceof Error ? error.message : 'テンプレートが見つかりませんでした');
       return;
     }
 
-    const templateItems = (data.items ?? []) as TemplateItem[];
+    const templateItems = (data.items ?? []) as TemplateDetailItem[];
     const orderedItems = templateItems
       .slice()
       .sort((a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER));
@@ -73,13 +65,10 @@ export default function TemplateRunScreen() {
 
     if (orderedItems.length > 0) {
       const itemIds = orderedItems.map((item) => item.id);
-      const { data: executions, error: executionsError } = await supabase
-        .from('executions')
-        .select('id, item_id, checked')
-        .eq('user_id', user.id)
-        .in('item_id', itemIds);
-
-      if (executionsError) {
+      let executions;
+      try {
+        executions = await fetchExecutionsByItemIds(user.id, itemIds);
+      } catch {
         setExecutionState(
           orderedItems.reduce((acc, item) => {
             acc[item.id] = { checked: false };
@@ -94,7 +83,7 @@ export default function TemplateRunScreen() {
         return acc;
       }, {} as ExecutionState);
 
-      executions?.forEach((execution) => {
+      executions.forEach((execution) => {
         if (map[execution.item_id]) {
           map[execution.item_id] = {
             executionId: execution.id,
@@ -162,23 +151,17 @@ export default function TemplateRunScreen() {
           if (update.remoteChecked === update.localChecked) {
             continue;
           }
-          const { error } = await supabase
-            .from('executions')
-            .update({ checked: update.localChecked })
-            .eq('id', update.executionId)
-            .eq('user_id', user.id);
-          if (error) throw error;
+          await updateExecutionChecked({
+            executionId: update.executionId,
+            userId: user.id,
+            checked: update.localChecked,
+          });
           setExecutionState((prev) => ({
             ...prev,
             [update.itemId]: { executionId: update.executionId, checked: update.localChecked },
           }));
         } else if (update.localChecked) {
-          const { data, error } = await supabase
-            .from('executions')
-            .insert({ user_id: user.id, item_id: update.itemId, checked: true })
-            .select('id, checked')
-            .single();
-          if (error || !data) throw error ?? new Error('チェック状態の保存に失敗しました');
+          const data = await insertExecution({ userId: user.id, itemId: update.itemId, checked: true });
           setExecutionState((prev) => ({
             ...prev,
             [update.itemId]: { executionId: data.id, checked: true },
@@ -203,12 +186,7 @@ export default function TemplateRunScreen() {
     setResetting(true);
     try {
       const itemIds = items.map((item) => item.id);
-      const { error } = await supabase
-        .from('executions')
-        .delete()
-        .eq('user_id', user.id)
-        .in('item_id', itemIds);
-      if (error) throw error;
+      await deleteExecutionsByItemIds(user.id, itemIds);
       const resetState = items.reduce((acc, item) => {
         acc[item.id] = { checked: false };
         return acc;

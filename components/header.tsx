@@ -17,7 +17,7 @@ export function Header() {
       <View style={styles.textBlock}>
         <Text style={styles.title}>チェックリストアプリ</Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {user?.user_metadata?.full_name || user?.email || 'ゲスト'}
+          {user?.email}
         </Text>
       </View>
       <Pressable

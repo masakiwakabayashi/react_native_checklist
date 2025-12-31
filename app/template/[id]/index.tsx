@@ -4,22 +4,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
-
-type TemplateItem = {
-  id: string;
-  title: string;
-  sort_order: number;
-  created_at?: string | null;
-};
-
-type TemplateDetail = {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at?: string | null;
-  items?: TemplateItem[] | null;
-};
+import { fetchTemplateDetail } from '@/repositories/templates';
+import type { TemplateDetail } from '@/repositories/templates';
 
 export default function TemplateDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -47,21 +33,14 @@ export default function TemplateDetailScreen() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('templates')
-      .select('id, name, description, created_at, items(id, title, sort_order, created_at)')
-      .eq('user_id', user.id)
-      .eq('id', templateId)
-      .single();
-
-    if (error) {
+    try {
+      const data = await fetchTemplateDetail(user.id, templateId);
+      setTemplate(data);
+      setErrorMessage(null);
+    } catch (error) {
       setTemplate(null);
-      setErrorMessage(error.message);
-      return;
+      setErrorMessage(error instanceof Error ? error.message : 'テンプレートを取得できませんでした');
     }
-
-    setTemplate(data);
-    setErrorMessage(null);
   }, [templateId, user]);
 
   useFocusEffect(
