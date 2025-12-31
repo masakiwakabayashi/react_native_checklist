@@ -1,5 +1,6 @@
+import { StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -24,10 +25,21 @@ export default function TemplateDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const templateId = typeof params.id === 'string' ? params.id : undefined;
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const sortedItems = useMemo(() => {
+    if (!template?.items) {
+      return [];
+    }
+
+    return template.items.slice().sort((a, b) => {
+      if (!a.created_at || !b.created_at) return a.title.localeCompare(b.title);
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+  }, [template?.items]);
 
   const fetchTemplate = useCallback(async () => {
     if (!user || !templateId) {
@@ -52,10 +64,30 @@ export default function TemplateDetailScreen() {
     setErrorMessage(null);
   }, [templateId, user]);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchTemplate().finally(() => setLoading(false));
-  }, [fetchTemplate]);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      setLoading(true);
+      fetchTemplate().finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+      return () => {
+        isActive = false;
+      };
+    }, [fetchTemplate]),
+  );
+
+  const handleGoHome = useCallback(() => {
+    if (router.canGoBack()) {
+      navigation.dispatch(StackActions.popToTop());
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [navigation, router]);
 
   if (!templateId) {
     return (
@@ -82,19 +114,12 @@ export default function TemplateDetailScreen() {
     );
   }
 
-  const sortedItems = useMemo(() => {
-    return (template.items ?? []).slice().sort((a, b) => {
-      if (!a.created_at || !b.created_at) return a.title.localeCompare(b.title);
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-  }, [template.items]);
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.actionRow}>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={handleGoHome}
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
           <Text style={styles.backButtonText}>ホームに戻る</Text>
         </Pressable>

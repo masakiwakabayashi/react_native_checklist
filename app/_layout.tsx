@@ -7,6 +7,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// 次はページ遷移のところを全体的になんとかする
+
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 
 export const unstable_settings = {

@@ -1,6 +1,7 @@
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { nanoid } from 'nanoid/non-secure';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,6 +24,7 @@ type TemplateItemField = {
 
 export default function TemplateCreateScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -30,6 +32,14 @@ export default function TemplateCreateScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const isFormValid = name.trim().length > 0 && !submitting;
+
+  const handleNavigateHome = useCallback(() => {
+    if (router.canGoBack()) {
+      navigation.dispatch(StackActions.popToTop());
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [navigation, router]);
 
   const handleAddItemField = () => {
     setItems((prev) => [...prev, { id: nanoid(), title: '' }]);
@@ -108,7 +118,7 @@ export default function TemplateCreateScreen() {
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.replace('/(tabs)')}
+            onPress={handleNavigateHome}
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
             <Text style={styles.backButtonText}>ホームに戻る</Text>
           </Pressable>

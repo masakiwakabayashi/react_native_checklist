@@ -1,3 +1,4 @@
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { nanoid } from 'nanoid/non-secure';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -27,6 +28,7 @@ export default function TemplateEditScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const templateId = typeof params.id === 'string' ? params.id : undefined;
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuth();
 
   const [name, setName] = useState('');
@@ -38,6 +40,24 @@ export default function TemplateEditScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isFormValid = name.trim().length > 0 && !submitting;
+
+  const handleNavigateHome = useCallback(() => {
+    if (router.canGoBack()) {
+      navigation.dispatch(StackActions.popToTop());
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [navigation, router]);
+
+  const handleNavigateToDetail = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (templateId) {
+      router.replace(`/template/${templateId}`);
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [router, templateId]);
 
   const fetchTemplate = useCallback(async () => {
     if (!user || !templateId) {
@@ -60,7 +80,7 @@ export default function TemplateEditScreen() {
     setName(data.name ?? '');
     setDescription(data.description ?? '');
 
-    const templateItems = (data.items ?? []) as Array<{ id: string; title: string; sort_order?: number | null }>;
+    const templateItems = (data.items ?? []) as { id: string; title: string; sort_order?: number | null }[];
     const sortedItems = templateItems
       .slice()
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -179,7 +199,7 @@ export default function TemplateEditScreen() {
         }
       }
 
-      router.replace(`/template/${templateId}`);
+      handleNavigateToDetail();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'テンプレートの更新に失敗しました。';
       Alert.alert('エラー', message);
@@ -211,7 +231,7 @@ export default function TemplateEditScreen() {
         <Text style={styles.errorText}>{errorMessage}</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={handleNavigateHome}
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
           <Text style={styles.backButtonText}>ホームに戻る</Text>
         </Pressable>
@@ -229,13 +249,13 @@ export default function TemplateEditScreen() {
           <View style={styles.actionRow}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace('/(tabs)')}
+              onPress={handleNavigateHome}
               style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
               <Text style={styles.backButtonText}>ホームに戻る</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace(`/template/${templateId}`)}
+              onPress={handleNavigateToDetail}
               style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}>
               <Text style={styles.secondaryButtonText}>詳細へ戻る</Text>
             </Pressable>

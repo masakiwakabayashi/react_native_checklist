@@ -1,3 +1,4 @@
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -25,6 +26,7 @@ export default function TemplateRunScreen() {
   const templateId = typeof params.id === 'string' ? params.id : undefined;
   const { user } = useAuth();
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [template, setTemplate] = useState<TemplateMeta | null>(null);
   const [items, setItems] = useState<TemplateItem[]>([]);
@@ -34,6 +36,7 @@ export default function TemplateRunScreen() {
   const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
   const [resetting, setResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const detailRouteId = template?.id ?? templateId;
 
   const fetchChecklist = useCallback(async () => {
     if (!user || !templateId) {
@@ -117,6 +120,24 @@ export default function TemplateRunScreen() {
     setLoading(true);
     fetchChecklist().finally(() => setLoading(false));
   }, [fetchChecklist]);
+
+  const handleNavigateHome = useCallback(() => {
+    if (router.canGoBack()) {
+      navigation.dispatch(StackActions.popToTop());
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [navigation, router]);
+
+  const handleNavigateToDetail = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else if (detailRouteId) {
+      router.replace(`/template/${detailRouteId}`);
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [detailRouteId, router]);
 
   const handleToggle = useCallback((itemId: string) => {
     setLocalState((prev) => ({
@@ -230,7 +251,7 @@ export default function TemplateRunScreen() {
         <Text style={styles.errorText}>{errorMessage ?? 'しばらくしてからお試しください。'}</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={handleNavigateHome}
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
           <Text style={styles.backButtonText}>ホームに戻る</Text>
         </Pressable>
@@ -246,13 +267,13 @@ export default function TemplateRunScreen() {
       <View style={styles.actionRow}>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={handleNavigateHome}
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}>
           <Text style={styles.backButtonText}>ホームに戻る</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.replace(`/template/${template.id}`)}
+          onPress={handleNavigateToDetail}
           style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}>
           <Text style={styles.secondaryButtonText}>詳細に戻る</Text>
         </Pressable>
